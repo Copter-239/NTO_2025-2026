@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление миссией дрона</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0a192f;
+            color: #e6f1ff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #233554;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #8892b0;
+            font-size: 1.2rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-section, .control-section, .tubes-section, .map-section {
+            background-color: #112240;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid #233554;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #233554;
+        }
+
+        .section-title h2 {
+            font-size: 1.6rem;
+            color: #64ffda;
+            margin-left: 10px;
+        }
+
+        .icon {
+            font-size: 1.8rem;
+        }
+
+        /* Видеопоток */
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 8px;
+            background-color: #0a192f;
+            border: 1px solid #233554;
+        }
+
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #000;
+        }
+
+        .video-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 25, 47, 0.85);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .video-status {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #64ffda;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Кнопки управления */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 20px 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .control-btn i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 176, 155, 0.3);
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ff8a00, #e52e71);
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 138, 0, 0.3);
+        }
+
+        .kill-btn {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        }
+
+        .kill-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 65, 108, 0.3);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Карта */
+        .map-section {
+            margin-bottom: 30px;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #233554;
+        }
+
+        /* Список врезок */
+        .tubes-section {
+            margin-bottom: 30px;
+        }
+
+        .tubes-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .tubes-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tubes-list::-webkit-scrollbar-track {
+            background: #0a192f;
+            border-radius: 4px;
+        }
+
+        .tubes-list::-webkit-scrollbar-thumb {
+            background: #64ffda;
+            border-radius: 4px;
+        }
+
+        .tube-item {
+            background-color: #0a192f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #64ffda;
+            transition: all 0.3s ease;
+        }
+
+        .tube-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tube-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .tube-id {
+            font-weight: 700;
+            color: #64ffda;
+            font-size: 1.2rem;
+        }
+
+        .tube-coordinates {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        .tube-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .tube-diameter, .tube-status {
+            background-color: #233554;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .tube-status.detected {
+            color: #96c93d;
+        }
+
+        .tube-status.confirmed {
+            color: #00b09b;
+        }
+
+        .tube-status.alert {
+            color: #ff8a00;
+        }
+
+        /* Статус миссии */
+        .mission-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #112240;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #233554;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .status-circle.active {
+            background-color: #64ffda;
+            box-shadow: 0 0 10px #64ffda;
+        }
+
+        .status-circle.inactive {
+            background-color: #ff416c;
+        }
+
+        .status-circle.paused {
+            background-color: #ff8a00;
+            box-shadow: 0 0 10px #ff8a00;
+        }
+
+        .last-update {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        /* Маркеры на карте */
+        .leaflet-marker-icon {
+            filter: hue-rotate(120deg);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard {
+                gap: 15px;
+            }
+
+            .video-container, #map {
+                height: 300px;
+            }
+
+            .mission-status {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-drone"></i> Управление миссией дрона</h1>
+            <p class="subtitle">Мониторинг трубопроводов и обнаружение несанкционированных врезок</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="video-section">
+                <div class="section-title">
+                    <div class="icon">📹</div>
+                    <h2>Видеопоток с камеры дрона</h2>
+                </div>
+                <div class="video-container">
+                    <img id="videoFeed" class="video-feed" src="" alt="Видеопоток с камеры дрона">
+                    <div class="video-overlay">
+                        <div class="video-status">
+                            <div class="status-indicator"></div>
+                            <span>Потоковое видео активно (кадр: /img_down_cam)</span>
+                        </div>
+                        <div class="fps-counter">Частота обновления: 5 кадров/с</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">
+                    <div class="icon">🎮</div>
+                    <h2>Управление миссией</h2>
+                </div>
+                <p style="margin-bottom: 20px; color: #8892b0;">Используйте кнопки для управления выполнением миссии дрона</p>
+
+                <div class="control-buttons">
+                    <button id="startBtn" class="control-btn start-btn">
+                        <i class="fas fa-play-circle"></i>
+                        Старт (/start)
+                        <span class="btn-subtitle">Запуск кода миссии</span>
+                    </button>
+
+                    <button id="stopBtn" class="control-btn stop-btn" disabled>
+                        <i class="fas fa-stop-circle"></i>
+                        Стоп (/stop)
+                        <span class="btn-subtitle">Прерывание и посадка</span>
+                    </button>
+
+                    <button id="killBtn" class="control-btn kill-btn" disabled>
+                        <i class="fas fa-skull-crossbones"></i>
+                        Kill Switch (/kill)
+                        <span class="btn-subtitle">Аварийное отключение</span>
+                    </button>
+                </div>
+
+                <div class="mission-status">
+                    <div class="status-info">
+                        <div id="missionStatusCircle" class="status-circle inactive"></div>
+                        <div>
+                            <h3 id="missionStatusText">Миссия не активна</h3>
+                            <p id="missionDetails">Ожидание команды старт</p>
+                        </div>
+                    </div>
+                    <div class="last-update">
+                        Последнее обновление: <span id="lastUpdateTime">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="tubes-section">
+            <div class="section-title">
+                <div class="icon">🔍</div>
+                <h2>Обнаруженные врезки (ответвления)</h2>
+            </div>
+            <p style="margin-bottom: 20px; color: #8892b0;">Список автоматически обновляется с эндпоинта /tubes</p>
+
+            <div id="tubesList" class="tubes-list">
+                <!-- Список врезок будет загружен сюда -->
+            </div>
+        </div>
+    </div>
+    <script>
+        // Инициализация переменных
+        let missionActive = false;
+        let missionPaused = false;
+        let videoUpdateInterval;
+        let tubesUpdateInterval;
+        let map;
+        let markers = [];
+        let tubeCounter = 1;
+
+        // Обновление видеопотока
+        function updateVideoStream() {
+            const videoFeed = document.getElementById('videoFeed');
+            // Добавляем случайный параметр для предотвращения кэширования
+            const timestamp = new Date().getTime();
+            videoFeed.src = `/img_down_cam?t=${timestamp}`;
+
+            // Обработка ошибки загрузки изображения
+            videoFeed.onerror = function() {
+                console.log("Ошибка загрузки видеопотока. Используется заглушка.");
+                // Можно установить заглушку или сообщение об ошибке
+                videoFeed.src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22800%22%20height%3D%22450%22%20viewBox%3D%220%200%20800%20450%22%3E%3Crect%20width%3D%22800%22%20height%3D%22450%22%20fill%3D%22%230a192f%22%2F%3E%3Ctext%20x%3D%22400%22%20y%3D%22225%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2224%22%20fill%3D%22%2364ffda%22%20text-anchor%3D%22middle%22%3EВидеопоток%20не%20доступен%3C%2Ftext%3E%3Ctext%20x%3D%22400%22%20y%3D%22265%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20fill%3D%22%238892b0%22%20text-anchor%3D%22middle%22%3EЭндпоинт%3A%20%2Fimg_down_cam%3C%2Ftext%3E%3C%2Fsvg%3E";
+            };
+        }
+
+        // Загрузка списка врезок
+        async function loadTubesList() {
+            try {
+                // В реальном приложении здесь будет fetch запрос к /tubes
+                // const response = await fetch('/tubes');
+                // const tubes = await response.json();
+
+                // Имитация данных с сервера
+                const mockTubes = [
+                    {
+                        id: tubeCounter++,
+                        coordinates: { lat: 55.7458 + (Math.random() - 0.5) * 0.01, lng: 37.6273 + (Math.random() - 0.5) * 0.01 },
+                        diameter: Math.floor(Math.random() * 100) + 50,
+                        status: Math.random() > 0.5 ? 'detected' : 'confirmed',
+                        timestamp: new Date().toLocaleTimeString()
+                    },
+                    {
+                        id: tubeCounter++,
+                        coordinates: { lat: 55.7658 + (Math.random() - 0.5) * 0.01, lng: 37.6073 + (Math.random() - 0.5) * 0.01 },
+                        diameter: Math.floor(Math.random() * 100) + 50,
+                        status: 'alert',
+                        timestamp: new Date().toLocaleTimeString()
+                    },
+                    {
+                        id: tubeCounter++,
+                        coordinates: { lat: 55.7358 + (Math.random() - 0.5) * 0.01, lng: 37.6473 + (Math.random() - 0.5) * 0.01 },
+                        diameter: Math.floor(Math.random() * 100) + 50,
+                        status: Math.random() > 0.5 ? 'detected' : 'confirmed',
+                        timestamp: new Date().toLocaleTimeString()
+                    }
+                ];
+
+                // Ограничим количество врезок для отображения
+                if (tubeCounter > 20) {
+                    mockTubes.shift(); // Удаляем старую врезку
+                }
+
+                // Обновляем список врезок
+                updateTubesList(mockTubes);
+
+                // Добавляем новые врезки на карту
+                mockTubes.forEach(tube => {
+                    addTubeToMap([tube.coordinates.lat, tube.coordinates.lng], `Врезка #${tube.id}`);
+                });
+
+            } catch (error) {
+                console.error('Ошибка при загрузке списка врезок:', error);
+                // В случае ошибки показываем заглушку
+                document.getElementById('tubesList').innerHTML = `
+                    <div class="tube-item">
+                        <div class="tube-header">
+                            <div class="tube-id">Ошибка загрузки</div>
+                        </div>
+                        <p>Не удалось загрузить данные о врезках с сервера</p>
+                        <div class="tube-details">
+                            <div class="tube-diameter">Эндпоинт: /tubes</div>
+                            <div class="tube-status alert">Ошибка</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Обновление списка врезок в интерфейсе
+        function updateTubesList(tubes) {
+            const tubesList = document.getElementById('tubesList');
+            let html = '';
+
+            tubes.forEach(tube => {
+                const statusText = tube.status === 'detected' ? 'Обнаружена' :
+                                  tube.status === 'confirmed' ? 'Подтверждена' : 'Требует внимания';
+
+                html += `
+                    <div class="tube-item">
+                        <div class="tube-header">
+                            <div class="tube-id">Врезка #${tube.id}</div>
+                            <div class="tube-coordinates">${tube.coordinates.lat.toFixed(6)}, ${tube.coordinates.lng.toFixed(6)}</div>
+                        </div>
+                        <p>Обнаружена в ${tube.timestamp}</p>
+                        <div class="tube-details">
+                            <div class="tube-diameter">Диаметр: ~${tube.diameter} мм</div>
+                            <div class="tube-status ${tube.status}">${statusText}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            tubesList.innerHTML = html;
+        }
+
+        // Обновление времени последнего обновления
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ru-RU');
+            document.getElementById('lastUpdateTime').textContent = timeString;
+        }
+
+        // Управление миссией
+        function startMission() {
+            if (missionActive) return;
+
+            console.log("Запрос на /start отправлен");
+            missionActive = true;
+            missionPaused = false;
+
+            // Обновляем интерфейс
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('killBtn').disabled = false;
+
+            document.getElementById('missionStatusCircle').className = 'status-circle active';
+            document.getElementById('missionStatusText').textContent = 'Миссия выполняется';
+            document.getElementById('missionDetails').textContent = 'Дрон выполняет облет и поиск врезок';
+
+            // В реальном приложении здесь будет fetch запрос к /start
+            // fetch('/start', { method: 'POST' })
+
+            updateLastUpdateTime();
+        }
+
+        function stopMission() {
+            if (!missionActive) return;
+
+            console.log("Запрос на /stop отправлен");
+            missionActive = false;
+            missionPaused = true;
+
+            // Обновляем интерфейс
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('killBtn').disabled = true;
+
+            document.getElementById('missionStatusCircle').className = 'status-circle paused';
+            document.getElementById('missionStatusText').textContent = 'Миссия приостановлена';
+            document.getElementById('missionDetails').textContent = 'Дрон выполняет посадку';
+
+            // В реальном приложении здесь будет fetch запрос к /stop
+            // fetch('/stop', { method: 'POST' })
+
+            updateLastUpdateTime();
+        }
+
+        function killMission() {
+            if (!missionActive) return;
+
+            console.log("Запрос на /kill отправлен");
+            missionActive = false;
+            missionPaused = false;
+
+            // Обновляем интерфейс
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('killBtn').disabled = true;
+
+            document.getElementById('missionStatusCircle').className = 'status-circle inactive';
+            document.getElementById('missionStatusText').textContent = 'Миссия прервана';
+            document.getElementById('missionDetails').textContent = 'Дрон отключен (дизарм)';
+
+            // В реальном приложении здесь будет fetch запрос к /kill
+            // fetch('/kill', { method: 'POST' })
+
+            updateLastUpdateTime();
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Настраиваем обработчики кнопок
+            document.getElementById('startBtn').addEventListener('click', startMission);
+            document.getElementById('stopBtn').addEventListener('click', stopMission);
+            document.getElementById('killBtn').addEventListener('click', killMission);
+
+            // Запускаем обновление видеопотока (каждые 200 мс = 5 кадров/с)
+            updateVideoStream();
+            videoUpdateInterval = setInterval(updateVideoStream, 200);
+
+            // Запускаем обновление списка врезок (каждые 5 секунд)
+            loadTubesList();
+            tubesUpdateInterval = setInterval(loadTubesList, 5000);
+
+            // Обновляем время последнего обновления (каждую минуту)
+            updateLastUpdateTime();
+            setInterval(updateLastUpdateTime, 60000);
+
+            // Добавляем эффект при наведении на кнопки
+            const controlButtons = document.querySelectorAll('.control-btn');
+            controlButtons.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'translateY(-5px)';
+                    }
+                });
+
+                btn.addEventListener('mouseleave', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+        });
+
+        // Очистка интервалов при закрытии страницы
+        window.addEventListener('beforeunload', function() {
+            if (videoUpdateInterval) clearInterval(videoUpdateInterval);
+            if (tubesUpdateInterval) clearInterval(tubesUpdateInterval);
+        });
+    </script>
+</body>
+</html>
