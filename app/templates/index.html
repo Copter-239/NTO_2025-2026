@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление миссией дрона</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             margin: 0;
@@ -96,10 +97,8 @@
         }
 
         .video-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
             background-color: #000;
+            text-align: center;
         }
 
         .video-overlay {
@@ -338,11 +337,6 @@
             font-size: 0.9rem;
         }
 
-        /* Маркеры на карте */
-        .leaflet-marker-icon {
-            filter: hue-rotate(120deg);
-        }
-
         /* Адаптивность */
         @media (max-width: 768px) {
             h1 {
@@ -364,6 +358,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -383,9 +378,9 @@
                     <div class="video-overlay">
                         <div class="video-status">
                             <div class="status-indicator"></div>
-                            <span>Потоковое видео активно (кадр: http://127.0.0.1:8080/snapshot?topic=/main_camera/image_raw)</span>
+                            <span>Потоковое видео активно (кадр: /img_down_cam)</span>
                         </div>
-                        <div class="fps-counter">Частота обновления: 5 кадров/с</div>
+                        <div class="fps-counter">Частота обновления: <span id="fpsCounter">0</span> кадров/с</div>
                     </div>
                 </div>
             </div>
@@ -432,7 +427,13 @@
             </div>
         </div>
 
-
+        <div class="map-section">
+            <div class="section-title">
+                <div class="icon">🗺️</div>
+                <h2>Карта обнаруженных врезок</h2>
+            </div>
+            <div id="map"></div>
+        </div>
 
         <div class="tubes-section">
             <div class="section-title">
@@ -446,6 +447,8 @@
             </div>
         </div>
     </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // Инициализация переменных
         let missionActive = false;
@@ -455,20 +458,49 @@
         let map;
         let markers = [];
         let tubeCounter = 1;
+        let frameCount = 0;
+        let fps = 0;
+        let lastFrameTime = Date.now();
+
+        // Координаты для примера (можно заменить реальными)
+        const initialCoordinates = [55.7558, 37.6173]; // Москва
 
         // Обновление видеопотока
-        function updateVideoStream() {
+        async function updateVideoStream() {
             const videoFeed = document.getElementById('videoFeed');
-            // Добавляем случайный параметр для предотвращения кэширования
-            const timestamp = new Date().getTime();
-            videoFeed.src = `http://127.0.0.1:8080/snapshot?topic=/main_camera/image_raw?t=${timestamp}`;
 
-            // Обработка ошибки загрузки изображения
-            videoFeed.onerror = function() {
-                console.log("Ошибка загрузки видеопотока. Используется заглушка.");
-                // Можно установить заглушку или сообщение об ошибке
+            try {
+                // Делаем запрос к серверу для получения изображения
+                const response = await fetch('/img_down_cam');
+
+                if (response.ok) {
+                    // Получаем base64 строку с изображением
+                    const base64Data = await response.text();
+
+                    // Проверяем, является ли ответ валидным base64 изображением
+                    if (base64Data && base64Data.startsWith('data:image')) {
+                        videoFeed.src = base64Data;
+
+                        // Подсчет FPS
+                        frameCount++;
+                        const now = Date.now();
+                        if (now - lastFrameTime >= 1000) {
+                            fps = frameCount;
+                            frameCount = 0;
+                            lastFrameTime = now;
+                            document.getElementById('fpsCounter').textContent = fps;
+                        }
+                    } else {
+                        throw new Error('Неверный формат изображения');
+                    }
+                } else {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+            } catch (error) {
+                console.log("Ошибка загрузки видеопотока:", error.message);
+                // Используем заглушку
                 videoFeed.src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22800%22%20height%3D%22450%22%20viewBox%3D%220%200%20800%20450%22%3E%3Crect%20width%3D%22800%22%20height%3D%22450%22%20fill%3D%22%230a192f%22%2F%3E%3Ctext%20x%3D%22400%22%20y%3D%22225%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2224%22%20fill%3D%22%2364ffda%22%20text-anchor%3D%22middle%22%3EВидеопоток%20не%20доступен%3C%2Ftext%3E%3Ctext%20x%3D%22400%22%20y%3D%22265%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2218%22%20fill%3D%22%238892b0%22%20text-anchor%3D%22middle%22%3EЭндпоинт%3A%20%2Fimg_down_cam%3C%2Ftext%3E%3C%2Fsvg%3E";
-            };
+            }
         }
 
         // Загрузка списка врезок
@@ -511,11 +543,6 @@
                 // Обновляем список врезок
                 updateTubesList(mockTubes);
 
-                // Добавляем новые врезки на карту
-                mockTubes.forEach(tube => {
-                    addTubeToMap([tube.coordinates.lat, tube.coordinates.lng], `Врезка #${tube.id}`);
-                });
-
             } catch (error) {
                 console.error('Ошибка при загрузке списка врезок:', error);
                 // В случае ошибки показываем заглушку
@@ -534,33 +561,6 @@
             }
         }
 
-        // Обновление списка врезок в интерфейсе
-        function updateTubesList(tubes) {
-            const tubesList = document.getElementById('tubesList');
-            let html = '';
-
-            tubes.forEach(tube => {
-                const statusText = tube.status === 'detected' ? 'Обнаружена' :
-                                  tube.status === 'confirmed' ? 'Подтверждена' : 'Требует внимания';
-
-                html += `
-                    <div class="tube-item">
-                        <div class="tube-header">
-                            <div class="tube-id">Врезка #${tube.id}</div>
-                            <div class="tube-coordinates">${tube.coordinates.lat.toFixed(6)}, ${tube.coordinates.lng.toFixed(6)}</div>
-                        </div>
-                        <p>Обнаружена в ${tube.timestamp}</p>
-                        <div class="tube-details">
-                            <div class="tube-diameter">Диаметр: ~${tube.diameter} мм</div>
-                            <div class="tube-status ${tube.status}">${statusText}</div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            tubesList.innerHTML = html;
-        }
-
         // Обновление времени последнего обновления
         function updateLastUpdateTime() {
             const now = new Date();
@@ -569,70 +569,100 @@
         }
 
         // Управление миссией
-        function startMission() {
+        async function startMission() {
             if (missionActive) return;
 
-            console.log("Запрос на /start отправлен");
-            missionActive = true;
-            missionPaused = false;
+            console.log("Отправка запроса на /start");
 
-            // Обновляем интерфейс
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-            document.getElementById('killBtn').disabled = false;
+            try {
+                const response = await fetch('/start');
+                if (response.ok) {
+                    console.log("Миссия запущена");
+                    missionActive = true;
+                    missionPaused = false;
 
-            document.getElementById('missionStatusCircle').className = 'status-circle active';
-            document.getElementById('missionStatusText').textContent = 'Миссия выполняется';
-            document.getElementById('missionDetails').textContent = 'Дрон выполняет облет и поиск врезок';
+                    // Обновляем интерфейс
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('killBtn').disabled = false;
 
-            // В реальном приложении здесь будет fetch запрос к /start
-            // fetch('/start', { method: 'POST' })
+                    document.getElementById('missionStatusCircle').className = 'status-circle active';
+                    document.getElementById('missionStatusText').textContent = 'Миссия выполняется';
+                    document.getElementById('missionDetails').textContent = 'Дрон выполняет облет и поиск врезок';
 
-            updateLastUpdateTime();
+                    updateLastUpdateTime();
+                } else {
+                    console.error('Ошибка при запуске миссии:', response.status);
+                    alert('Ошибка при запуске миссии. Проверьте консоль для деталей.');
+                }
+            } catch (error) {
+                console.error('Ошибка сети при запуске миссии:', error);
+                alert('Ошибка сети при запуске миссии. Проверьте подключение к серверу.');
+            }
         }
 
-        function stopMission() {
+        async function stopMission() {
             if (!missionActive) return;
 
-            console.log("Запрос на /stop отправлен");
-            missionActive = false;
-            missionPaused = true;
+            console.log("Отправка запроса на /stop");
 
-            // Обновляем интерфейс
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('killBtn').disabled = true;
+            try {
+                const response = await fetch('/stop');
+                if (response.ok) {
+                    console.log("Миссия остановлена");
+                    missionActive = false;
+                    missionPaused = true;
 
-            document.getElementById('missionStatusCircle').className = 'status-circle paused';
-            document.getElementById('missionStatusText').textContent = 'Миссия приостановлена';
-            document.getElementById('missionDetails').textContent = 'Дрон выполняет посадку';
+                    // Обновляем интерфейс
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('killBtn').disabled = true;
 
-            // В реальном приложении здесь будет fetch запрос к /stop
-            // fetch('/stop', { method: 'POST' })
+                    document.getElementById('missionStatusCircle').className = 'status-circle paused';
+                    document.getElementById('missionStatusText').textContent = 'Миссия приостановлена';
+                    document.getElementById('missionDetails').textContent = 'Дрон выполняет посадку';
 
-            updateLastUpdateTime();
+                    updateLastUpdateTime();
+                } else {
+                    console.error('Ошибка при остановке миссии:', response.status);
+                    alert('Ошибка при остановке миссии. Проверьте консоль для деталей.');
+                }
+            } catch (error) {
+                console.error('Ошибка сети при остановке миссии:', error);
+                alert('Ошибка сети при остановке миссии. Проверьте подключение к серверу.');
+            }
         }
 
-        function killMission() {
+        async function killMission() {
             if (!missionActive) return;
 
-            console.log("Запрос на /kill отправлен");
-            missionActive = false;
-            missionPaused = false;
+            console.log("Отправка запроса на /kill");
 
-            // Обновляем интерфейс
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-            document.getElementById('killBtn').disabled = true;
+            try {
+                const response = await fetch('/kill');
+                if (response.ok) {
+                    console.log("Миссия прервана (kill switch)");
+                    missionActive = false;
+                    missionPaused = false;
 
-            document.getElementById('missionStatusCircle').className = 'status-circle inactive';
-            document.getElementById('missionStatusText').textContent = 'Миссия прервана';
-            document.getElementById('missionDetails').textContent = 'Дрон отключен (дизарм)';
+                    // Обновляем интерфейс
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('killBtn').disabled = true;
 
-            // В реальном приложении здесь будет fetch запрос к /kill
-            // fetch('/kill', { method: 'POST' })
+                    document.getElementById('missionStatusCircle').className = 'status-circle inactive';
+                    document.getElementById('missionStatusText').textContent = 'Миссия прервана';
+                    document.getElementById('missionDetails').textContent = 'Дрон отключен (дизарм)';
 
-            updateLastUpdateTime();
+                    updateLastUpdateTime();
+                } else {
+                    console.error('Ошибка при прерывании миссии:', response.status);
+                    alert('Ошибка при прерывании миссии. Проверьте консоль для деталей.');
+                }
+            } catch (error) {
+                console.error('Ошибка сети при прерывании миссии:', error);
+                alert('Ошибка сети при прерывании миссии. Проверьте подключение к серверу.');
+            }
         }
 
         // Инициализация при загрузке страницы
@@ -670,6 +700,8 @@
                     }
                 });
             });
+
+            console.log("Веб-интерфейс инициализирован");
         });
 
         // Очистка интервалов при закрытии страницы
@@ -679,5 +711,4 @@
         });
     </script>
 </body>
-
 </html>
