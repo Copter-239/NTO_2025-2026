@@ -37,6 +37,32 @@ def wait_arrival(tolerance=0.2, timeout=30.0):
     rospy.logwarn(f"Timeout reached after {timeout} seconds")
     return False
 
+def wait_for_position_estimate(timeout=10.0):
+    """Wait for drone to get position estimate in aruco_map frame"""
+    rospy.loginfo("Waiting for position estimate in aruco_map...")
+    start_time = rospy.Time.now().to_sec()
+    
+    while rospy.Time.now().to_sec() - start_time < timeout:
+        telem = get_telemetry(frame_id='aruco_map')
+        
+        # Check if we have a valid position estimate (not all zeros or NaNs)
+        position_valid = (
+            not math.isnan(telem.x) and
+            not math.isnan(telem.y) and
+            not math.isnan(telem.z) and
+            (abs(telem.x) > 0.01 or abs(telem.y) > 0.01 or abs(telem.z) > 0.01)
+        )
+        
+        if position_valid:
+            rospy.loginfo(f"Position estimate obtained: ({telem.x:.2f}, {telem.y:.2f}, {telem.z:.2f})")
+            return True
+        
+        rospy.loginfo(f"Waiting for position estimate... Current: ({telem.x:.2f}, {telem.y:.2f}, {telem.z:.2f})")
+        rospy.sleep(1.0)
+    
+    rospy.logerr(f"Failed to get position estimate within {timeout} seconds")
+    return False
+
 # Mission start
 rospy.loginfo("=" * 50)
 rospy.loginfo("Starting autonomous mission")
@@ -58,23 +84,58 @@ if wait_arrival():
 else:
     rospy.logwarn("Takeoff timeout, but continuing mission...")
 
-# Navigate to point (4.5, 4.5, 0)
-rospy.loginfo("\nPhase 2: Navigation to target")
-rospy.loginfo("Flying to coordinates (4.5, 4.5, 0) in aruco_map frame...")
-res = navigate(x=4.5, y=4.5, z=0, frame_id='aruco_map')
-
-if res.success:
-    if wait_arrival(tolerance=0.3, timeout=45.0):
-        rospy.loginfo("Target position reached successfully")
+# Wait for position estimate in aruco_map frame
+if not wait_for_position_estimate(timeout=15.0):
+    rospy.logwarn("Proceeding with body frame navigation instead...")
+    
+    # If we can't get position estimate, use body frame for relative navigation
+    rospy.loginfo("Phase 2: Navigation using body frame")
+    rospy.loginfo("Flying forward and right by 4.5m each...")
+    
+    # Navigate relative to current position
+    res = navigate(x=4.5, y=4.5, z=0, frame_id='body')
+    
+    if res.success:
+        if wait_arrival(tolerance=0.5, timeout=45.0):
+            rospy.loginfo("Relative navigation successful")
+        else:
+            rospy.logwarn("Navigation timeout")
     else:
-        rospy.logwarn("Navigation timeout. Proceeding to next waypoint.")
+        rospy.logerr("Body frame navigation command rejected!")
 else:
-    rospy.logerr("Navigation command rejected!")
+    # Navigate to point (4.5, 4.5, 0) in aruco_map frame
+    rospy.loginfo("\nPhase 2: Navigation to target in aruco_map")
+    rospy.loginfo("Flying to coordinates (4.5, 4.5, 0) in aruco_map frame...")
+    res = navigate(x=4.5, y=4.5, z=0, frame_id='aruco_map')
+
+    if res.success:
+        if wait_arrival(tolerance=0.3, timeout=45.0):
+            rospy.loginfo("Target position reached successfully")
+        else:
+            rospy.logwarn("Navigation timeout. Proceeding to next waypoint.")
+    else:
+        rospy.logerr("Navigation command rejected! Trying body frame...")
+        # Fallback to body frame
+        res = navigate(x=4.5, y=4.5, z=0, frame_id='body')
+        if res.success:
+            wait_arrival(tolerance=0.5, timeout=45.0)
 
 # Return to home
 rospy.loginfo("\nPhase 3: Return to home")
 rospy.loginfo("Returning to home position (0, 0, 2)...")
-res = navigate(x=0, y=0, z=2, frame_id='aruco_map')
+
+# Try to return using aruco_map if we have position, otherwise use body frame
+telem = get_telemetry(frame_id='aruco_map')
+position_valid = not math.isnan(telem.x) and not math.isnan(telem.y) and not math.isnan(telem.z)
+
+if position_valid:
+    res = navigate(x=0, y=0, z=2, frame_id='aruco_map')
+    frame_used = "aruco_map"
+else:
+    res = navigate(x=0, y=0, z=2, frame_id='body')
+    frame_used = "body"
+
+rospy.loginfo(f"Return command using {frame_used} frame")
 
 if res.success:
     if wait_arrival():
@@ -90,11 +151,11 @@ rospy.loginfo("Mission sequence completed")
 rospy.loginfo("Ready for landing command or next instructions")
 rospy.loginfo("=" * 50)
 
-# Optional: Add automatic landing
-# rospy.loginfo("Initiating automatic landing...")
-# land_result = land()
-# if land_result.success:
-#     rospy.loginfo("✓ Landing sequence started")
-# else:
-#     rospy.logerr("Landing command failed!")
-
+# Landing option
+rospy.loginfo("Initiating automatic landing...")
+land_result = land()
+if land_result.success:
+    rospy.loginfo("Landing sequence started")
+    rospy.sleep(5)  # Wait for landing to complete
+else:
+    rospy.logerr("Landing command failed!")
