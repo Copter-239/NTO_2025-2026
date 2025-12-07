@@ -383,7 +383,7 @@
                     <div class="video-overlay">
                         <div class="video-status">
                             <div class="status-indicator"></div>
-                            <span>Потоковое видео активно (кадр: /img_down_cam)</span>
+                            <span>Потоковое видео активно (кадр: http://127.0.0.1:8080/snapshot?topic=/main_camera/image_raw)</span>
                         </div>
                         <div class="fps-counter">Частота обновления: 5 кадров/с</div>
                     </div>
@@ -461,7 +461,7 @@
             const videoFeed = document.getElementById('videoFeed');
             // Добавляем случайный параметр для предотвращения кэширования
             const timestamp = new Date().getTime();
-            videoFeed.src = `/img_down_cam?t=${timestamp}`;
+            videoFeed.src = `http://127.0.0.1:8080/snapshot?topic=/main_camera/image_raw?t=${timestamp}`;
 
             // Обработка ошибки загрузки изображения
             videoFeed.onerror = function() {
@@ -679,4 +679,5 @@
         });
     </script>
 </body>
+
 </html>
