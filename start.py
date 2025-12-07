@@ -17,20 +17,6 @@ set_velocity = rospy.ServiceProxy('set_velocity', srv.SetVelocity)
 set_attitude = rospy.ServiceProxy('set_attitude', srv.SetAttitude)
 set_rates = rospy.ServiceProxy('set_rates', srv.SetRates)
 land = rospy.ServiceProxy('land', Trigger)
-is_starting_process_running_flight = False
-process_running_flight = Process(target=lambda: run(["python3", "flight.py"], capture_output=True))
-def bool_start_or_stop_callback(msg):
-    global process_running_flight, is_starting_process_running_flight
-    if msg.data:
-        if not is_starting_process_running_flight:
-            is_starting_process_running_flight = True
-            process_running_flight.start()
-    else:
-        if is_starting_process_running_flight:
-            is_starting_process_running_flight = False
-            process_running_flight.terminate()
-            process_running_flight.join()
-rospy.Subscriber('bool_start', Bool, bool_start_or_stop_callback)
 rospy.spin()
 
 

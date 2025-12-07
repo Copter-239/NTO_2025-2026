@@ -3,22 +3,20 @@ from clover import srv, long_callback
 from mavros_msgs.srv import CommandBool
 from std_msgs.msg import UInt16MultiArray, Bool
 from std_srvs.srv import Trigger
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 from flask import Flask, request, render_template
 import base64, cv2
-from threading import Thread
+from multiprocessing import Process
+from subprocess import run
+bridge = CvBridge()
 arming = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
 land_dron = rospy.ServiceProxy('land', Trigger)
 navigate = rospy.ServiceProxy('navigate', srv.Navigate)
 start_bool = rospy.Publisher('bool_start', Bool, queue_size=1)
 rospy.init_node('server_web_ui')
 app = Flask(__name__)
-def msg_convert(data, obj):
-    msg = obj()
-    msg.data = data
-    return msg
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
-bridge = CvBridge()
+
 @long_callback
 def image_callback(data):
     global img_now_down_cam
@@ -42,19 +40,19 @@ def index():
     return render_template('index.html')
 @app.route('/start')
 def start():
-    # start_bool.publish(msg_convert(True, Bool))
+    bool_start_or_stop_callback(True)
     return 'ok', 200
 @app.route('/stop')
 def stop():
-    # start_bool.publish(msg_convert(False, Bool))
-    # navigate(x=0, y=0, z=0, frame_id='body')
-    # land_dron()
+    bool_start_or_stop_callback(False)
+    navigate(x=0, y=0, z=0, frame_id='body')
+    land_dron()
     return 'ok', 200
 @app.route('/kill')
 def kill():
-    # navigate(x=0, y=0, z=0, frame_id='body')
-    # start_bool.publish(msg_convert(False, Bool))
-    # arming(False)
+    navigate(x=0, y=0, z=0, frame_id='body')
+    bool_start_or_stop_callback(False)
+    arming(False)
     return 'ok', 200
 @app.route('/img_down_cam')
 def img_down_cam():
@@ -62,7 +60,19 @@ def img_down_cam():
 rospy.Subscriber('main_camera/image_raw', Image, image_callback)
 # f = Thread(target=get_data_img_cam_PC)
 # f.start()
-
+is_starting_process_running_flight = False
+process_running_flight = Process(target=lambda: run(["python3", r"..\flight.py"], capture_output=True))
+def bool_start_or_stop_callback(msg):
+    global process_running_flight, is_starting_process_running_flight
+    if msg:
+        if not is_starting_process_running_flight:
+            is_starting_process_running_flight = True
+            process_running_flight.start()
+    else:
+        if is_starting_process_running_flight:
+            is_starting_process_running_flight = False
+            process_running_flight.terminate()
+            process_running_flight.join()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
