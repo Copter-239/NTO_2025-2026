@@ -17,9 +17,7 @@ set_rates = rospy.ServiceProxy('set_rates', srv.SetRates)
 land = rospy.ServiceProxy('land', Trigger)
 
 navigate(x=0, y=0, z=2, frame_id='aruco_map', auto_arm=True)
-rospy.sleep(5)
 navigate(x=4.5, y=4.5, z=0, frame_id='aruco_map')
-rospy.sleep(5)
 navigate(x=0, y=0, z=2, frame_id='aruco_map')
-rospy.sleep(5)
+
 
