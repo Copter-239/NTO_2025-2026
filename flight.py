@@ -15,9 +15,10 @@ set_velocity = rospy.ServiceProxy('set_velocity', srv.SetVelocity)
 set_attitude = rospy.ServiceProxy('set_attitude', srv.SetAttitude)
 set_rates = rospy.ServiceProxy('set_rates', srv.SetRates)
 land = rospy.ServiceProxy('land', Trigger)
-
+rospy.sleep(2)
 navigate(x=0, y=0, z=2, frame_id='aruco_map', auto_arm=True)
 navigate(x=4.5, y=4.5, z=0, frame_id='aruco_map')
 navigate(x=0, y=0, z=2, frame_id='aruco_map')
+
 
 
