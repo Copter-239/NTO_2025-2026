@@ -61,7 +61,7 @@ rospy.Subscriber('main_camera/image_raw', Image, image_callback)
 # f = Thread(target=get_data_img_cam_PC)
 # f.start()
 is_starting_process_running_flight = False
-process_running_flight = Process(target=lambda: run(["python3", r"..\flight.py"], capture_output=True))
+process_running_flight = Process(target=lambda: run(["python3", r"../flight.py"], capture_output=True))
 def bool_start_or_stop_callback(msg):
     global process_running_flight, is_starting_process_running_flight
     if msg:
@@ -76,5 +76,6 @@ def bool_start_or_stop_callback(msg):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
 
 
