@@ -6,6 +6,8 @@ from mavros_msgs.srv import CommandBool
 from std_msgs.msg import UInt16MultiArray, Bool
 from multiprocessing import Process
 from subprocess import run
+import setting
+Process(target=lambda: run(["python3", "rand_world.py"], capture_output=True)).start()
 Process(target=lambda: run(["python3", "app/app.py"], capture_output=True)).start()
 rospy.init_node('main_node')
 get_telemetry = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
@@ -30,5 +32,6 @@ def bool_start_or_stop_callback(msg):
             process_running_flight.join()
 rospy.Subscriber('bool_start', Bool, bool_start_or_stop_callback)
 rospy.spin()
+
 
 
