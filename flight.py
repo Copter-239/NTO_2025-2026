@@ -1,3 +1,4 @@
+import rospy
 from clover import srv
 from std_srvs.srv import Trigger
 import cv2
@@ -20,4 +21,5 @@ rospy.sleep(1)
 navigate(x=4.5, y=4.5, z=0, frame_id='body')
 rospy.sleep(1)
 navigate(x=0, y=0, z=2, frame_id='body')
+
 rospy.sleep(1)
