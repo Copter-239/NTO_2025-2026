@@ -23,12 +23,12 @@ bridge = CvBridge()
 def image_callback(data):
     global img_now_down_cam
     img_now_down_cam = bridge.imgmsg_to_cv2(data, 'bgr8')
-cap = cv2.VideoCapture(0)
-def get_data_img_cam_PC():
-    global img_now_down_cam
-    while True:
-        _, img_now_down_cam = cap.read()
-        cv2.waitKey(10)
+# cap = cv2.VideoCapture(0)
+# def get_data_img_cam_PC():
+#     global img_now_down_cam
+#     while True:
+#         _, img_now_down_cam = cap.read()
+#         cv2.waitKey(10)
 def img_to_base64_rgb(img):
     # Конвертируем BGR → RGB
     #img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -56,9 +56,9 @@ def kill():
     # start_bool.publish(msg_convert(False, Bool))
     # arming(False)
     return 'ok', 200
-# @app.route('/img_down_cam')
-# def img_down_cam():
-#     return img_to_base64_rgb(img_now_down_cam)
+@app.route('/img_down_cam')
+def img_down_cam():
+    return img_to_base64_rgb(img_now_down_cam)
 rospy.Subscriber('main_camera/image_raw', Image, image_callback)
 # f = Thread(target=get_data_img_cam_PC)
 # f.start()
