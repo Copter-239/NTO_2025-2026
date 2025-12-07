@@ -23,6 +23,35 @@
     </include>
 
 
+    <include>
+      <uri>model://sidebar1</uri>
+      <pose>__POSE3__ 0.1 0 1.5708 __ANGLE3__</pose>
+      <name>3</name>
+    </include>
+
+    <include>
+      <uri>model://sidebar2</uri>
+      <pose>__POSE4__ 0.1 0 1.5708 __ANGLE4__</pose>
+      <name>4</name>
+    </include>
+
+    <include>
+      <uri>model://sidebar3</uri>
+      <pose>__POSE5__ 0.1 0 1.5708 __ANGLE5__</pose>
+      <name>5</name>
+    </include>
+
+    <include>
+      <uri>model://sidebar4</uri>
+      <pose>__POSE6__ 0.1 0 1.5708 __ANGLE6__</pose>
+      <name>6</name>
+    </include>
+
+    <include>
+      <uri>model://sidebar5</uri>
+      <pose>__POSE7__ 0.1 0 1.5708 __ANGLE7__</pose>
+      <name>7</name>
+    </include>
 
 
     <include>

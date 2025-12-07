@@ -28,7 +28,7 @@ def split_polyline_to_points(polyline: List[Tuple[float, float]],
 
     # Функция для вычисления расстояния между точками
     def distance(p1, p2):
-        return math.dist(p1, p2)
+        return math.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
 
     # Обрабатываем каждый отрезок ломаной
     for i in range(len(polyline) - 1):
@@ -97,8 +97,8 @@ def angle_between_lines(p1, p2, p3):
 
 def find_triangle_angles(p1, p2):
     # Вычисляем длины катетов
-    y1, x1 = p1
-    y2, x2 = p2
+    x1, y1 = list(p1).__reversed__()
+    x2, y2 = list(p2).__reversed__()
     dx = x2 - x1
     dy = y2 - y1
     angle1 = math.atan2(dy, dx)
@@ -116,8 +116,8 @@ def find_midpoint(point1, point2):
     Returns:
         tuple: координаты средней точки (x, y)
     """
-    y1, x1 = point1
-    y2, x2 = point2
+    x1, y1 = list(point1).__reversed__()
+    x2, y2 = list(point2).__reversed__()
 
     # Вычисляем средние координаты
     mid_x = (x1 + x2) / 2
@@ -153,16 +153,16 @@ print(angle, p1, p2, dist1, dist2, angle1, angle2, midpoint1, midpoint2)
 print(' '.join(map(str, midpoint1)))
 print(' '.join(map(str, midpoint2)))
 print(pv, p)
-if __name__ != '__main__':
+if __name__ == '__main__':
     with open('clover_aruco.world') as f:
         world = f.read()
     world = world.replace('__POSE1__', ' '.join(map(str, midpoint1)))
     world = world.replace('__POSE2__', ' '.join(map(str, midpoint2)))
     world = world.replace('__ANGLE1__', str(angle1))
     world = world.replace('__ANGLE2__', str(angle2))
-    # for i in range(len(points2)):
-    #     world = world.replace(f'__POSE{i+3}__', ' '.join(map(str, find_midpoint(points2[i][0], points2[i][1]))))
-    #     world = world.replace(f'__ANGLE{i+3}__', str(find_triangle_angles(points2[i][0], points2[i][1])))
+    for i in range(len(points2)):
+        world = world.replace(f'__POSE{i+3}__', ' '.join(map(str, find_midpoint(points2[i][0], points2[i][1]))))
+        world = world.replace(f'__ANGLE{i+3}__', str(find_triangle_angles(points2[i][0], points2[i][1])))
     with open('/home/clover/catkin_ws/src/clover/clover_simulation/resources/worlds/clover_aruco.world', 'w') as f:
         f.write(world)
 
@@ -181,15 +181,16 @@ if __name__ != '__main__':
         f.write(main)
     os.system('rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/main2')
     os.system('cp -r main /home/clover/catkin_ws/src/clover/clover_simulation/models/main2/')
-    # for i in range(len(points2)):
-    #     with open('sidebar.sdf') as f:
-    #         sidebar = f.read()
-    #     sidebar = sidebar.replace('__LENGTH__', str(math.dist(points2[i][0], points2[i][1])))
-    #     with open('sidebars/sidebar.sdf', 'w') as f:
-    #         f.write(sidebar)
-    #     os.system(f'cp -r sidebars /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}/')
+    for i in range(len(points2)):
+        with open('sidebar.sdf') as f:
+            sidebar = f.read()
+        sidebar = sidebar.replace('__LENGTH__', str(math.dist(points2[i][0], points2[i][1])))
+        with open('sidebar/sidebar.sdf', 'w') as f:
+            f.write(sidebar)
+        os.system(f'rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}')
+        os.system(f'cp -r sidebar /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}/')
 
-else:
+if True:
     import cv2
     import numpy as np
 
