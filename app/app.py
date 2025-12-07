@@ -1,8 +1,8 @@
-import ropy
+import rospy
 from clover import srv
 from mavros_msgs.srv import CommandBool
 from std_msgs.msg import UInt16MultiArray, Bool
-from std_srvs.srv import Triggers
+from std_srvs.srv import Trigger
 from flask import Flask, request, render_template
 arming = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
 land_dron = rospy.ServiceProxy('land', Trigger)
@@ -35,3 +35,4 @@ def kill():
     return 'ok', 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
