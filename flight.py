@@ -54,7 +54,7 @@ if not res.success:
 rospy.loginfo("Takeoff command accepted. Waiting to reach altitude...")
 
 if wait_arrival():
-    rospy.loginfo("✓ Takeoff successful. Current altitude: 2m")
+    rospy.loginfo("Takeoff successful. Current altitude: 2m")
 else:
     rospy.logwarn("Takeoff timeout, but continuing mission...")
 
@@ -65,7 +65,7 @@ res = navigate(x=4.5, y=4.5, z=0, frame_id='aruco_map')
 
 if res.success:
     if wait_arrival(tolerance=0.3, timeout=45.0):
-        rospy.loginfo("✓ Target position reached successfully")
+        rospy.loginfo("Target position reached successfully")
     else:
         rospy.logwarn("Navigation timeout. Proceeding to next waypoint.")
 else:
@@ -78,7 +78,7 @@ res = navigate(x=0, y=0, z=2, frame_id='aruco_map')
 
 if res.success:
     if wait_arrival():
-        rospy.loginfo("✓ Successfully returned to home position")
+        rospy.loginfo("Successfully returned to home position")
     else:
         rospy.logwarn("Return timeout, but mission complete.")
 else:
@@ -97,3 +97,4 @@ rospy.loginfo("=" * 50)
 #     rospy.loginfo("✓ Landing sequence started")
 # else:
 #     rospy.logerr("Landing command failed!")
+
