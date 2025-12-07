@@ -8,7 +8,7 @@ arming = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
 land_dron = rospy.ServiceProxy('land', Trigger)
 navigate = rospy.ServiceProxy('navigate', srv.Navigate)
 start_bool = rospy.Publisher('bool_start', Bool, queue_size=1)
-rospy.init_node('flight')
+rospy.init_node('server_web_ui')
 app = Flask(__name__)
 def msg_convert(data, obj):
     msg = obj()
@@ -35,4 +35,5 @@ def kill():
     return 'ok', 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
 
