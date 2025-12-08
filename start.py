@@ -8,7 +8,7 @@ from multiprocessing import Process
 from subprocess import run
 import setting
 Process(target=lambda: run(["python3", "rand_world.py"], capture_output=True)).start()
-Process(target=lambda: run(["python3", "app/app.py"], capture_output=True)).start()
+Process(target=lambda: run(["python3", "app/app.py"])).start()
 rospy.init_node('main_node')
 get_telemetry = rospy.ServiceProxy('get_telemetry', srv.GetTelemetry)
 navigate = rospy.ServiceProxy('navigate', srv.Navigate)
@@ -18,6 +18,7 @@ set_attitude = rospy.ServiceProxy('set_attitude', srv.SetAttitude)
 set_rates = rospy.ServiceProxy('set_rates', srv.SetRates)
 land = rospy.ServiceProxy('land', Trigger)
 rospy.spin()
+
 
 
 
