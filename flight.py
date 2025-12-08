@@ -45,12 +45,12 @@ print(f"Tekushchaya poziciya: x={telem.x:.2f}, y={telem.y:.2f}, z={telem.z:.2f}"
 # Obratite vnimanie: z=0 oznachaet "ne menyat vysotu" v sisteme 'body'
 print("Dvizhenie vpered i vpravo...")
 navigate(x=4.5, y=4.5, z=2, frame_id='body', speed=0.5)
-rospy.sleep(10)
+rospy.sleep(20)
 
 msg = rospy.wait_for_message('main_camera/image_raw', Image, timeout=5.0)
 image = bridge.imgmsg_to_cv2(msg, 'bgr8')
 cv2.imwrite('output.jpg', image)
-rospy.sleep(10)
+rospy.sleep(5)
 # Vozvrat v iskhodnuyu tochku (v sisteme 'body' eto otnositelnye koordinaty)
 print("Vozvrat v iskhodnuyu tochku...")
 navigate(x=-4.5, y=-4.5, z=-2, frame_id='body', speed=0.5)
@@ -60,5 +60,6 @@ rospy.sleep(10)
 print("Posadka...")
 land()
 rospy.sleep(5)
+
 
 print("Missiya zavershena")
