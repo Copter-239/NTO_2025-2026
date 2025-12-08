@@ -90,7 +90,7 @@ is_starting_process_running_flight = False
 
 
 def start_flight():
-    return run(["python3", r"../flight.py"], capture_output=True)
+    return run(["python3", r"../flight.py"])
 
 
 process_running_flight = Process(target=start_flight)
@@ -110,3 +110,4 @@ def bool_start_or_stop_callback(msg):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
