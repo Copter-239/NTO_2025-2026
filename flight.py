@@ -48,7 +48,7 @@ navigate(x=4.5, y=4.5, z=2, frame_id='body', speed=0.5)
 rospy.sleep(10)
 
 msg = rospy.wait_for_message('main_camera/image_raw', Image, timeout=5.0)
-image = bridge.imgmsg_to_cv2(msg.data, 'bgr8')
+image = bridge.imgmsg_to_cv2(msg, 'bgr8')
 cv2.imwrite('output.jpg', image)
 rospy.sleep(10)
 # Vozvrat v iskhodnuyu tochku (v sisteme 'body' eto otnositelnye koordinaty)
