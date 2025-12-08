@@ -3,7 +3,8 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
-
+import rospy
+from std_msgs.msg import Float64MultiArray, Bool
 
 def get_intermediate_points_count(p1: Tuple[float, float], p2: Tuple[float, float], num_points: int) -> List[
     Tuple[float, float]]:
@@ -205,7 +206,7 @@ def detect_aruco_maps(frame, output_frame=False, is_id=None):
     return itog
 
 
-img = cv2.imread(r"C:\Users\user\Downloads\Telegram Desktop\photo_2025-12-04_16-44-05.jpg")
+img = cv2.imread(r"output.jpg")
 data = detect_aruco_maps(img.copy(), True, (
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
     90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
@@ -247,12 +248,12 @@ if len(a) > 0:
 
     # Применить аффинное преобразование
     img = cv2.warpAffine(img, M, (w, h))
-    p = (data1[0] + data[0] + data3[1] + data2[1] / 4) * 0.025
+    otstup_dlay_rabot = (data1[0] + data[0] + data3[1] + data2[1] / 4) * 0.025
     # img = cv2.circle(img, (data[0], data3[1]), 2, (0, 255, 255), -1)
     # img = cv2.circle(img, (data1[0], data2[1]), 2, (0, 255, 255), -1)
     # img = cv2.circle(img, center, 2, (0, 255, 0), -1)
     img_obr = img.copy()
-    img_obr = img_obr[int(data3[1] - p):int(data2[1] + p), int(data[0] - p):int(data1[0] + p)]
+    img_obr = img_obr[int(data3[1] - otstup_dlay_rabot):int(data2[1] + otstup_dlay_rabot), int(data[0] - otstup_dlay_rabot):int(data1[0] + otstup_dlay_rabot)]
     img_obr = cv2.resize(img_obr, (500, 500), interpolation=cv2.INTER_LINEAR)
     bw = cv2.inRange(img_obr, (0, 0, 161), (255, 120, 255))
     contours, _ = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
@@ -273,7 +274,6 @@ if len(a) > 0:
     cv2.drawContours(bw, [approx3], -1, (255, 255, 255), -1)
     cv2.imshow('contours', n)
     cv2.imshow('img_obr', img_obr)
-    cv2.waitKey(0)
     dist = math.dist(approx[0][0].tolist(), approx[1][0].tolist())
 
     points = get_intermediate_points_count(approx[0][0].tolist(), approx[1][0].tolist(), int(dist / 0.02))
@@ -320,20 +320,28 @@ if len(a) > 0:
         img_obr = cv2.circle(img_obr, p[0], 5, (255, 0, 0), -1)
         line = min(line_points, key=lambda pv: math.dist(p[0], pv))
         img_obr = cv2.line(img_obr, p[0], (int(line[0]), int(line[1])), (255, 0, 0), 2)
-        line_points_total.append((int(line[0]), int(line[1])))
+        line_points_total.append([int(line[0]), int(line[1])])
         cv2.drawContours(img_obr, [approx3], -1, (0, 255, 0), 2)
     cv2.imshow('contours', n)
     cv2.imshow('img_obr', img_obr)
-    cv2.waitKey(0)
+
     # p = min(line_points, key=lambda pv: math.dist(p, pv))
     cv2.imshow('temp', temp)
     cv2.imshow('bw', bw)
-    cv2.waitKey(0)
+
     bw = cv2.bitwise_xor(temp, bw)
     for a in approx3:
         # print(a[0])
         temp = cv2.circle(temp, a[0], 5, (255, 0, 0), -1)
     cv2.imshow('temp', temp)
     cv2.imshow('bw', bw)
-    cv2.waitKey(0)
+
     print(line_points_total)
+
+    for p in range(len(line_points_total)):
+        k = (500 + otstup_dlay_rabot + otstup_dlay_rabot) / 10
+        line_points_total[p][0] /= k
+        line_points_total[p][1] /= k
+    print(line_points_total)
+    start_bool = rospy.Publisher('tubes', Float64MultiArray, queue_size=1)
+    cv2.waitKey(0)

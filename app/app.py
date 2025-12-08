@@ -1,7 +1,7 @@
 import rospy
 from clover import srv, long_callback
 from mavros_msgs.srv import CommandBool
-from std_msgs.msg import UInt16MultiArray, Bool
+from std_msgs.msg import Float64MultiArray, Bool
 from std_srvs.srv import Trigger
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
@@ -9,7 +9,7 @@ import base64
 import cv2
 from subprocess import run
 from multiprocessing import Process
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 
 bridge = CvBridge()
 arming = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
@@ -19,11 +19,16 @@ start_bool = rospy.Publisher('bool_start', Bool, queue_size=1)
 rospy.init_node('server_web_ui')
 app = Flask(__name__)
 
-
+tubes = []
 @long_callback
 def image_callback(data):
     global img_now_down_cam
     img_now_down_cam = bridge.imgmsg_to_cv2(data, 'bgr8')
+def callback_tubes(msg):
+    global tubes
+    tubes = []
+    for t in range(len(msg.data)):
+        tubes.append({'id':t+1, 'coordinates':{'lat':msg.data[t][1], "lng":msg.data[t][1]}})
 # cap = cv2.VideoCapture(0)
 # def get_data_img_cam_PC():
 #     global img_now_down_cam
@@ -70,10 +75,14 @@ def kill():
 @app.route('/img_down_cam')
 def img_down_cam():
     return img_to_base64_rgb(img_now_down_cam)
-    return "NOne"
+    # return "NOne"
 
+@app.route('/tubes')
+def tubes():
+    return jsonify(tubes)
 
 rospy.Subscriber('main_camera/image_raw', Image, image_callback)
+rospy.Subscriber('tubes', Float64MultiArray, callback_tubes)
 # f = Thread(target=get_data_img_cam_PC)
 # f.start()
 is_starting_process_running_flight = False
