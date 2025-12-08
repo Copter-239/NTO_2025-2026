@@ -154,41 +154,41 @@ print(' '.join(map(str, midpoint1)))
 print(' '.join(map(str, midpoint2)))
 print(pv, p)
 if __name__ == '__main__':
-    # with open('clover_aruco.world') as f:
-    #     world = f.read()
-    # world = world.replace('__POSE1__', ' '.join(map(str, midpoint1)))
-    # world = world.replace('__POSE2__', ' '.join(map(str, midpoint2)))
-    # world = world.replace('__ANGLE1__', str(angle1))
-    # world = world.replace('__ANGLE2__', str(angle2))
-    # for i in range(len(points2)):
-    #     world = world.replace(f'__POSE{i+3}__', ' '.join(map(str, find_midpoint(points2[i][0], points2[i][1]))))
-    #     world = world.replace(f'__ANGLE{i+3}__', str(find_triangle_angles(points2[i][0], points2[i][1])))
-    # with open('/home/clover/catkin_ws/src/clover/clover_simulation/resources/worlds/clover_aruco.world', 'w') as f:
-    #     f.write(world)
-    #
-    # with open('main.sdf') as f:
-    #     main = f.read()
-    # main = main.replace('__LENGTH__', str(dist1))
-    # with open('main/main.sdf', 'w') as f:
-    #     f.write(main)
-    # os.system('rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/main')
-    # os.system('cp -r main /home/clover/catkin_ws/src/clover/clover_simulation/models/main/')
-    #
-    # with open('main.sdf') as f:
-    #     main = f.read()
-    # main = main.replace('__LENGTH__', str(dist2))
-    # with open('main/main.sdf', 'w') as f:
-    #     f.write(main)
-    # os.system('rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/main2')
-    # os.system('cp -r main /home/clover/catkin_ws/src/clover/clover_simulation/models/main2/')
-    # for i in range(len(points2)):
-    #     with open('sidebar.sdf') as f:
-    #         sidebar = f.read()
-    #     sidebar = sidebar.replace('__LENGTH__', str(math.dist(points2[i][0], points2[i][1])))
-    #     with open('sidebar/sidebar.sdf', 'w') as f:
-    #         f.write(sidebar)
-    #     os.system(f'rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}')
-    #     os.system(f'cp -r sidebar /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}/')
+    with open('clover_aruco.world') as f:
+        world = f.read()
+    world = world.replace('__POSE1__', ' '.join(map(str, midpoint1)))
+    world = world.replace('__POSE2__', ' '.join(map(str, midpoint2)))
+    world = world.replace('__ANGLE1__', str(angle1))
+    world = world.replace('__ANGLE2__', str(angle2))
+    for i in range(len(points2)):
+        world = world.replace(f'__POSE{i+3}__', ' '.join(map(str, find_midpoint(points2[i][0], points2[i][1]))))
+        world = world.replace(f'__ANGLE{i+3}__', str(find_triangle_angles(points2[i][0], points2[i][1])))
+    with open('/home/clover/catkin_ws/src/clover/clover_simulation/resources/worlds/clover_aruco.world', 'w') as f:
+        f.write(world)
+
+    with open('main.sdf') as f:
+        main = f.read()
+    main = main.replace('__LENGTH__', str(dist1))
+    with open('main/main.sdf', 'w') as f:
+        f.write(main)
+    os.system('rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/main')
+    os.system('cp -r main /home/clover/catkin_ws/src/clover/clover_simulation/models/main/')
+
+    with open('main.sdf') as f:
+        main = f.read()
+    main = main.replace('__LENGTH__', str(dist2))
+    with open('main/main.sdf', 'w') as f:
+        f.write(main)
+    os.system('rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/main2')
+    os.system('cp -r main /home/clover/catkin_ws/src/clover/clover_simulation/models/main2/')
+    for i in range(len(points2)):
+        with open('sidebar.sdf') as f:
+            sidebar = f.read()
+        sidebar = sidebar.replace('__LENGTH__', str(math.dist(points2[i][0], points2[i][1])))
+        with open('sidebar/sidebar.sdf', 'w') as f:
+            f.write(sidebar)
+        os.system(f'rm -rf /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}')
+        os.system(f'cp -r sidebar /home/clover/catkin_ws/src/clover/clover_simulation/models/sidebar{i+1}/')
     pass
 
 if True:
